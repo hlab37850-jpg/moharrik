@@ -1,0 +1,62 @@
+name: Voice Clone (batch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: "النص المراد نطقه"
+        required: true
+      ref:
+        description: "مسار المقطع المرجعي داخل المستودع (مثل samples/voice.wav)"
+        required: true
+        default: "samples/voice.wav"
+      lang:
+        description: "رمز اللغة (ar, en, fr, ...)"
+        required: true
+        default: "ar"
+      consent:
+        description: "أقرّ بأن لدي إذن صاحب الصوت (اكتب yes)"
+        required: true
+
+jobs:
+  clone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check consent
+        run: |
+          if [ "${{ inputs.consent }}" != "yes" ]; then
+            echo "يجب كتابة yes للإقرار بالموافقة"; exit 1
+          fi
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libsndfile1
+
+      - name: Cache model
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/tts
+          key: xtts-v2-model
+
+      - name: Install Python deps
+        run: |
+          pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip install coqui-tts
+
+      - name: Generate
+        env:
+          TEXT: ${{ inputs.text }}
+        run: |
+          python app.py --text "$TEXT" --ref "${{ inputs.ref }}" \
+            --lang "${{ inputs.lang }}" --out output.wav --yes-i-have-consent
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloned-voice
+          path: output.wav

@@ -1,0 +1,11 @@
+{
+  "name": "Voice Clone Engine",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "hostRequirements": { "cpus": 4, "memory": "8gb", "storage": "32gb" },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y ffmpeg libsndfile1 && pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install --no-cache-dir coqui-tts 'gradio>=4.0'",
+  "postAttachCommand": "python app.py",
+  "forwardPorts": [7860],
+  "portsAttributes": {
+    "7860": { "label": "Voice Clone UI", "onAutoForward": "openBrowser" }
+  }
+}
